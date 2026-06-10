@@ -296,6 +296,9 @@ protected:
 	void _accessibility_action_set_value(const Variant &p_data);
 	void _accessibility_action_menu(const Variant &p_data);
 
+	// DAW: Added for web platform fix
+	void _paste_text_callback(String paste_buffer);
+
 public:
 	void edit(bool p_hide_focus = false);
 	void unedit();

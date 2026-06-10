@@ -539,6 +539,11 @@ String DisplayServer::clipboard_get() const {
 	ERR_FAIL_V_MSG(String(), "Clipboard is not supported by this display server.");
 }
 
+// DAW: Added for web platform fix
+void DisplayServer::clipboard_get_with_callback(const Callable &p_callback) {
+	WARN_PRINT("Clipboard get with callback is not supported by this display server.");
+}
+
 Ref<Image> DisplayServer::clipboard_get_image() const {
 	ERR_FAIL_V_MSG(Ref<Image>(), "Clipboard is not supported by this display server.");
 }
@@ -1677,6 +1682,7 @@ void DisplayServer::_bind_methods() {
 	BIND_ENUM_CONSTANT(FEATURE_NATIVE_COLOR_PICKER);
 	BIND_ENUM_CONSTANT(FEATURE_SELF_FITTING_WINDOWS);
 	BIND_ENUM_CONSTANT(FEATURE_ACCESSIBILITY_SCREEN_READER);
+	BIND_ENUM_CONSTANT(FEATURE_CLIPBOARD_CALLBACK); // DAW: Added for web platform fix
 
 	BIND_ENUM_CONSTANT(ROLE_UNKNOWN);
 	BIND_ENUM_CONSTANT(ROLE_DEFAULT_BUTTON);

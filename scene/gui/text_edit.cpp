@@ -7907,12 +7907,26 @@ void TextEdit::_paste_internal(int p_caret) {
 		return;
 	}
 
-	String clipboard = DisplayServer::get_singleton()->clipboard_get();
-	if (clipboard.is_empty()) {
-		// Nothing to paste.
-		return;
+	// DAW: Added for web platform fix
+	paste_internal_callback_caret = p_caret;
+
+	// DAW: Add if for web platform fix.  The else has some of the original code
+	if (DisplayServer::get_singleton()->has_feature(DisplayServer::FEATURE_CLIPBOARD_CALLBACK)) {
+		// DAW: Call the new method that defers the paste info callback due to how the web platform works
+		DisplayServer::get_singleton()->clipboard_get_with_callback(callable_mp(this, &TextEdit::_paste_internal_callback));
+	} else {
+		String clipboard = DisplayServer::get_singleton()->clipboard_get();
+		if (clipboard.is_empty()) {
+			// Nothing to paste.
+			return;
+		}
+
+		// DAW: Immediately call the new callback for web platform fix
+		_paste_internal_callback(clipboard);
 	}
 
+	// DAW: Commented out for web platform fix and placed into TextEdit::_paste_internal_callback()
+	/*
 	// Paste a full line. Ignore '\r' characters that may have been added to the clipboard by the OS.
 	if (get_caret_count() == 1 && !has_selection(0) && !cut_copy_line.is_empty() && cut_copy_line == clipboard.remove_char('\r')) {
 		insert_text(clipboard, get_caret_line(), 0);
@@ -7929,6 +7943,50 @@ void TextEdit::_paste_internal(int p_caret) {
 	for (int i = 0; i < sorted_carets.size(); i++) {
 		int caret_index = sorted_carets[i];
 		if (p_caret != -1 && p_caret != caret_index) {
+			continue;
+		}
+
+		if (has_selection(caret_index)) {
+			delete_selection(caret_index);
+		}
+
+		if (insert_line_per_caret) {
+			clipboard = clipboard_lines[i];
+		}
+
+		insert_text_at_caret(clipboard, caret_index);
+	}
+	end_multicaret_edit();
+	end_complex_operation();
+	*/
+}
+
+// DAW: Added for web platform fix
+void TextEdit::_paste_internal_callback(String clipboard) {
+	if (paste_internal_callback_caret >= get_caret_count() || paste_internal_callback_caret < -1) {
+		return;
+	}
+
+	if (!editable) {
+		return;
+	}
+
+	// Paste a full line. Ignore '\r' characters that may have been added to the clipboard by the OS.
+	if (get_caret_count() == 1 && !has_selection(0) && !cut_copy_line.is_empty() && cut_copy_line == clipboard.remove_char('\r')) {
+		insert_text(clipboard, get_caret_line(), 0);
+		return;
+	}
+
+	// Paste text at each caret or one line per caret.
+	Vector<String> clipboard_lines = clipboard.split("\n");
+	bool insert_line_per_caret = paste_internal_callback_caret == -1 && get_caret_count() > 1 && clipboard_lines.size() == get_caret_count();
+
+	begin_complex_operation();
+	begin_multicaret_edit();
+	Vector<int> sorted_carets = get_sorted_carets();
+	for (int i = 0; i < sorted_carets.size(); i++) {
+		int caret_index = sorted_carets[i];
+		if (paste_internal_callback_caret != -1 && paste_internal_callback_caret != caret_index) {
 			continue;
 		}
 

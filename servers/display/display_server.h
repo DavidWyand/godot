@@ -169,6 +169,7 @@ public:
 		FEATURE_NATIVE_COLOR_PICKER,
 		FEATURE_SELF_FITTING_WINDOWS,
 		FEATURE_ACCESSIBILITY_SCREEN_READER,
+		FEATURE_CLIPBOARD_CALLBACK, // DAW: Added for web platform fix
 	};
 
 	virtual bool has_feature(Feature p_feature) const = 0;
@@ -308,6 +309,7 @@ public:
 
 	virtual void clipboard_set(const String &p_text);
 	virtual String clipboard_get() const;
+	virtual void clipboard_get_with_callback(const Callable &p_callback); // DAW: Added for web platform fix
 	virtual Ref<Image> clipboard_get_image() const;
 	virtual bool clipboard_has() const;
 	virtual bool clipboard_has_image() const;

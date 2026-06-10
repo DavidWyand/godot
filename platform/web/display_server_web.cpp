@@ -1031,6 +1031,39 @@ String DisplayServerWeb::clipboard_get() const {
 	return clipboard;
 }
 
+// DAW: Added for web platform fix
+void DisplayServerWeb::clipboard_get_with_callback(const Callable &p_callback) {
+	clipboard_get_callback = p_callback;
+	godot_js_display_clipboard_get(update_clipboard_get_with_callback);
+}
+
+// DAW: Added for web platform fix
+void DisplayServerWeb::update_clipboard_get_with_callback(const char *p_text) {
+	String text = String::utf8(p_text);
+
+#ifdef PROXY_TO_PTHREAD_ENABLED
+	if (!Thread::is_main_thread()) {
+		callable_mp_static(DisplayServerWeb::_update_clipboard_get_with_callback).call_deferred(text);
+		return;
+	}
+#endif
+
+	_update_clipboard_get_with_callback(text);
+}
+
+// DAW: Added for web platform fix
+void DisplayServerWeb::_update_clipboard_get_with_callback(const String &p_text) {
+	get_singleton()->clipboard = p_text;
+	
+	if (get_singleton()->clipboard_get_callback.is_valid()) {
+		// Send the clipboard text to the callback
+		get_singleton()->clipboard_get_callback.call_deferred(p_text);
+
+		// Clear the callback
+		get_singleton()->clipboard_get_callback = Callable();
+	}
+}
+
 void DisplayServerWeb::send_window_event_callback(int p_notification) {
 #ifdef PROXY_TO_PTHREAD_ENABLED
 	if (!Thread::is_main_thread()) {
@@ -1205,6 +1238,7 @@ bool DisplayServerWeb::has_feature(Feature p_feature) const {
 		case FEATURE_CUSTOM_CURSOR_SHAPE:
 		case FEATURE_MOUSE:
 		case FEATURE_TOUCHSCREEN:
+		case FEATURE_CLIPBOARD_CALLBACK:	// DAW: Added for web platform fix
 			return true;
 		//case FEATURE_MOUSE_WARP:
 		//case FEATURE_NATIVE_DIALOG:

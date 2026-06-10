@@ -755,6 +755,8 @@ protected:
 	virtual void _cut_internal(int p_caret);
 	virtual void _copy_internal(int p_caret);
 	virtual void _paste_internal(int p_caret);
+	int paste_internal_callback_caret = -1;				// DAW: Added for web platform fix
+	void _paste_internal_callback(String clipboard);	// DAW: Added for web platform fix
 	virtual void _paste_primary_clipboard_internal(int p_caret);
 
 	void _accessibility_action_set_selection(const Variant &p_data);

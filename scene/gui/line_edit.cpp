@@ -1749,8 +1749,43 @@ void LineEdit::paste_text() {
 		return;
 	}
 
-	// Strip escape characters like \n and \t as they can't be displayed on LineEdit.
-	String paste_buffer = DisplayServer::get_singleton()->clipboard_get().strip_escapes();
+	// DAW: Add if for web platform fix.  The else has some of the original code
+	if (DisplayServer::get_singleton()->has_feature(DisplayServer::FEATURE_CLIPBOARD_CALLBACK)) {
+		// DAW: Call the new method that defers the paste info callback due to how the web platform works
+		DisplayServer::get_singleton()->clipboard_get_with_callback(callable_mp(this, &LineEdit::_paste_text_callback));
+	} else {
+		// Strip escape characters like \n and \t as they can't be displayed on LineEdit.
+		String paste_buffer = DisplayServer::get_singleton()->clipboard_get().strip_escapes();
+
+		// DAW: Immediately call the new callback for web platform fix
+		_paste_text_callback(paste_buffer);
+	}
+
+
+	// DAW: Commented out for web platform fix and placed into LineEdit::_paste_text_callback()
+	/*
+	if (!paste_buffer.is_empty()) {
+		int prev_len = text.length();
+		if (selection.enabled) {
+			selection_delete();
+		}
+		insert_text_at_caret(paste_buffer);
+
+		if (!text_changed_dirty) {
+			if (is_inside_tree() && text.length() != prev_len) {
+				callable_mp(this, &LineEdit::_text_changed).call_deferred();
+			}
+			text_changed_dirty = true;
+		}
+	}
+	*/
+}
+
+// DAW: Added for web platform fix
+void LineEdit::_paste_text_callback(String paste_buffer) {
+	if (!editable) {
+		return;
+	}
 
 	if (!paste_buffer.is_empty()) {
 		int prev_len = text.length();

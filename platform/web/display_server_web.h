@@ -70,6 +70,7 @@ private:
 	Callable drop_files_callback;
 
 	String clipboard;
+	Callable clipboard_get_callback;		// DAW: Added for web platform fix
 	Point2 touches[32];
 
 	Array voices;
@@ -144,6 +145,8 @@ private:
 	static void _update_voices_callback(const Vector<String> &p_voices);
 	WASM_EXPORT static void update_clipboard_callback(const char *p_text);
 	static void _update_clipboard_callback(const String &p_text);
+	WASM_EXPORT static void update_clipboard_get_with_callback(const char *p_text);	// DAW: Added for web platform fix
+	static void _update_clipboard_get_with_callback(const String &p_text);			// DAW: Added for web platform fix
 	WASM_EXPORT static void send_window_event_callback(int p_notification);
 	static void _send_window_event_callback(int p_notification);
 	WASM_EXPORT static void drop_files_js_callback(const char **p_filev, int p_filec);
@@ -209,6 +212,7 @@ public:
 	// clipboard
 	virtual void clipboard_set(const String &p_text) override;
 	virtual String clipboard_get() const override;
+	virtual void clipboard_get_with_callback(const Callable &p_callback) override;	// DAW: Added for web platform fix
 
 	// screen
 	virtual int get_screen_count() const override;
